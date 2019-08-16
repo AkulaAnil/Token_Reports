@@ -1,0 +1,209 @@
+<div id="page-title">
+  <h2>{{'TokenReportsModule.manage.title' | translate}}</h2>
+  </div>
+
+ <form [formGroup]="tokenForm">
+  <div fxLayout="row wrap">
+  <div fxFlex.gt-sm="13" fxFlex="100">
+    <mat-form-field class="w100 pad-rgt">
+      <mat-select placeholder="{{'TokenReportsModule.manage.selectPeriod' | translate}}" formControlName="dateRange" (selectionChange)="selectPeriod($event.value)">
+        <mat-option [value]="range.id" *ngFor="let range of DateType">{{range.type}}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="tokenForm.controls.dateRange.errors?.required">
+        {{'TokenReportsModule.manage.periodError' | translate}}
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <div fxFlex.gt-sm="13" fxFlex="100" *ngIf="tokenForm.value.dateRange == '1'">
+    <mat-form-field  class="w100 pad-rgt">
+      <input matInput [matDatepicker]="picker1" formControlName="fromDate" placeholder="{{'TokenReportsModule.manage.from' | translate}}"
+      [min]="startDate" [max]="tokenForm.value.toDate ? tokenForm.value.toDate : endDate" (focus)="picker1.open()" required>
+      <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+      <mat-datepicker #picker1></mat-datepicker>
+      <mat-error *ngIf="tokenForm.controls.fromDate.errors?.required">
+        {{'TokenReportsModule.manage.startDateRequired' | translate}}
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <div fxFlex.gt-sm="13" fxFlex="100" *ngIf="tokenForm.value.dateRange == '1'">
+    <mat-form-field  class="w100 pad-rgt">
+      <input matInput [matDatepicker]="picker2" formControlName="toDate" placeholder="{{'TokenReportsModule.manage.to' | translate}}"
+      [min]="tokenForm.value.fromDate ? tokenForm.value.fromDate : startDate"
+      [max]="endDate" (focus)="picker2.open()" required>
+      <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+      <mat-datepicker #picker2></mat-datepicker>
+      <mat-error *ngIf="tokenForm.controls.toDate.errors?.required">
+        {{'TokenReportsModule.manage.endDateRequired' | translate}}
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <div fxFlex.gt-sm="13" fxFlex="100">
+
+    <mat-form-field class="w100 pad-rgt">
+      <mat-select placeholder="{{'TokenReportsModule.manage.selectFloor' | translate}}" formControlName="floor" (selectionChange)="loadDepartments($event.value)" multiple>
+        <mat-select-trigger>  
+          {{floorName}}
+          <span *ngIf="(tokenForm?.value.floor)?.length>
+          1" > {{allFloorSelected?.selected ?'(+'+((tokenForm?.value.floor)?.length - 2)+' others)': '(+'+((tokenForm?.value.floor)?.length - 1) +' others)'}}
+          </span>
+          </mat-select-trigger>
+        <mat-option style="flex-direction: row-reverse" #allFloorSelected [value]="defaultFloorData" (click)="toggleAllSelection('floor')" >{{'TokenReportsModule.manage.allFloors' | translate}}</mat-option>
+        <mat-option style="flex-direction: row-reverse" [value]="floor.floorId" *ngFor="let floor of levellist" (click)="togglePerOne('floor')" >{{floor.floorName}}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="tokenForm.controls.floor.errors?.required">
+          {{'TokenReportsModule.manage.selectFloor' | translate}}
+      </mat-error>
+    </mat-form-field>
+
+  </div>
+  <div fxFlex.gt-sm="13" fxFlex="100">
+
+    <mat-form-field class="w100 pad-rgt">
+      <mat-select placeholder="{{'TokenReportsModule.manage.selectDepartment' | translate}}" formControlName="department" (selectionChange)="loadServices($event.value)" multiple>
+          <mat-select-trigger>
+              {{deptName}}
+              <span *ngIf="(tokenForm?.value.department)?.length>
+              1" class="example-additional-selection">
+              {{allDepartmentSelected?.selected ?'(+'+((tokenForm?.value.department)?.length - 2)+' others)': '(+'+((tokenForm?.value.department)?.length - 1) +' others)'}}
+              </span>
+              </mat-select-trigger>
+        <mat-option *ngIf="filterFloorGroup.length>0" style="flex-direction: row-reverse" #allDepartmentSelected [value]="defaultDeptData"  (click)="toggleAllSelection('department')">{{'TokenReportsModule.manage.allDeptartments' | translate}}</mat-option>
+        <mat-optgroup *ngFor="let floor of filterFloorGroup" [label]="floor.floorName">
+          <mat-option style="flex-direction: row-reverse" [value]="dept" *ngFor="let dept of floor.departments" (click)="togglePerOne('department')">{{dept.deptName}}</mat-option>
+        </mat-optgroup>
+      </mat-select>
+      <mat-error *ngIf="tokenForm.controls.department.errors?.required">
+          {{'TokenReportsModule.manage.selectDepartment' | translate}}
+      </mat-error>
+    </mat-form-field>
+
+  </div>
+
+  <div fxFlex.gt-sm="13" fxFlex="100">
+    <mat-form-field class="w100 pad-rgt">
+      <mat-select placeholder="{{'TokenReportsModule.manage.selectService' | translate}}" formControlName="service" multiple (selectionChange)="selectedModule($event.value)">
+          <mat-select-trigger> 
+            {{servicename}}
+            <span *ngIf="(tokenForm?.value.service)?.length>
+            1" class="example-additional-selection">
+            {{allServiceSelected?.selected ?((tokenForm?.value.service)?.length - 2>0)?'(+'+((tokenForm?.value.service)?.length - 2)+' others)':''
+                                           :((tokenForm?.value.service)?.length-1>0)?'(+'+((tokenForm?.value.service)?.length - 1) +' others)':''}}
+            </span>
+          </mat-select-trigger>
+        <mat-option *ngIf="filterDeptGroup.length>0" style="flex-direction: row-reverse" #allServiceSelected [value]="defaultServieData" (click)="toggleAllSelection('service')">{{'TokenReportsModule.manage.allServices' | translate}}</mat-option>
+        <mat-optgroup *ngFor="let dept of filterDeptGroup" [label]="dept.deptName">
+          <mat-option style="flex-direction: row-reverse" [value]="service" *ngFor="let service of dept.services" (click)="togglePerOne('service')">{{service.serviceEngName}}</mat-option>
+        </mat-optgroup>      
+      </mat-select>
+      <mat-error *ngIf="tokenForm.controls.service.errors?.required">
+          {{'TokenReportsModule.manage.selectService' | translate}}
+      </mat-error>
+    </mat-form-field>
+
+  </div>
+
+  <div fxFlex.gt-sm="13" fxFlex="100">
+
+    <mat-form-field class="w100 pad-rgt">
+      <input matInput  formControlName="tokennumber" placeholder="{{'TokenReportsModule.manage.tokenNumber' | translate}}"/>
+      <mat-error *ngIf="tokenForm.controls.tokennumber.errors?.required">
+        Token Number is required
+      </mat-error>
+    </mat-form-field>
+
+  </div>
+
+
+
+  <div fxFlex.gt-sm="25" fxFlex="100">
+    <button mat-raised-button color="primary" (click)="getReports()" [disabled]="tokenForm.invalid">{{'ActionNames.submit' | translate}}</button> &nbsp;
+    <button  mat-raised-button type="reset" (click)="clearAllFields()">{{'ActionNames.clear' | translate}}</button>
+  </div>
+
+  <div fxFlex.gt-sm="13" fxFlex="100">
+    <div class="clearfix mar-btm">
+      <div class="pull-left">
+        <button class="btn pull-right btn-yellow" [matMenuTriggerFor]="SearchGrid"
+          *ngIf="reportsList.length>0">{{'TokenReportsModule.manage.export' | translate}}
+          <i class="ti-angle-down"></i>
+        </button> &nbsp;
+        <mat-menu #SearchGrid="matMenu">
+
+          <button mat-menu-item (click)="ExportTOExcel()">
+            <i class="ti-file"></i> {{'TokenReportsModule.manage.excel' | translate}}</button>
+          <button mat-menu-item (click)="ExportTOCsv()">
+            <i class="ti-file"></i> {{'TokenReportsModule.manage.csv' | translate}}</button>
+        </mat-menu>
+      </div>
+    </div>
+  </div>
+
+</div>
+</form>
+<br>
+
+<div class="mat-elevation-z8" *ngIf="reportsList.length" class="table-responsive">
+  <h4 class="title pad-lft pad-top">{{'TokenReportsModule.manage.from' | translate}}: {{fromDate | date: 'yyyy-MM-dd'}} {{'TokenReportsModule.manage.to' | translate}}: {{toDate | date: 'yyyy-MM-dd'}}</h4>
+        <table mat-table #table [dataSource]="dataSource" matSort (matSortChange)="sortData()" class="table wrap-word"> 
+
+    
+            <ng-container matColumnDef="tokenNo">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.TokenNo' | translate}}</th>
+              <td mat-cell *matCellDef="let element" class="pad-all"> {{element.tokenNo}} </td>
+            </ng-container>
+
+            <ng-container matColumnDef="mrnNo">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.MrnNo' | translate}} </th>
+              <td mat-cell *matCellDef="let element" class="pad-all"> {{element.mrnNo}} </td>
+            </ng-container>
+
+            <ng-container matColumnDef="ptFstName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.PatientName' | translate}}  </th>
+              <td mat-cell *matCellDef="let element" class="pad-all"> {{element.ptFstName +' '+ element.ptLstName}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="appointmentTime" >
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.AppointmentTime' | translate}} </th>
+              <td mat-cell *matCellDef="let element" class="pad-all"> {{element.appointmentTime | date: 'dd/MM/yyyy, HH:mm'}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="checkInTime" >
+                <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.CheckInTime' | translate}} </th>
+                <td mat-cell *matCellDef="let element" class="pad-all"> {{element.checkInTime | date: 'dd/MM/yyyy, HH:mm'}}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="checkInMode" >
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.CheckInMode' | translate}}  </th>
+                  <td mat-cell *matCellDef="let element" class="pad-all"> {{element.checkInMode}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="deptEngName" >
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.Department' | translate}}  </th>
+                  <td mat-cell *matCellDef="let element" class="pad-all"> {{element.deptEngName}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="serviceEngName" >
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header class="pad-all">{{'TokenReportsModule.manage.Service' | translate}}  </th>
+                  <td mat-cell *matCellDef="let element" class="pad-all"> {{element.serviceEngName}} </td>
+                </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+          <div *ngIf="reportsList.length > pageSize" style="width: 100%">
+            <mat-paginator [length]="reportsList.length" [pageSize]="pageSize" [pageIndex]="listPage" showFirstLastButtons
+              (page)="getListData($event)">
+            </mat-paginator>
+          </div>
+
+
+        </div> 
+      <div *ngIf="reportsList.length <= 0 && hide"><span>{{'TokenReportsModule.manage.noData' | translate}}</span></div>
+        <div class="fullloader" *ngIf="loading">
+          <div class="fullloaderInner">
+            <img src="assets/images/loading.gif">
+          </div>
+        </div>
